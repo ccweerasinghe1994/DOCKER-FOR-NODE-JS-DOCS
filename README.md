@@ -20,6 +20,15 @@
     - [Running Non-root Container Users](#running-non-root-container-users)
     - [Working With The Node User Limits](#working-with-the-node-user-limits)
     - [Making Images Efficiently](#making-images-efficiently)
+  - [Controlling The Node Process In Containers](#controlling-the-node-process-in-containers)
+    - [Section Intro Controlling The Node Process](#section-intro-controlling-the-node-process)
+    - [Node Process Management](#node-process-management)
+    - [The Truth About the PID 1 Problem](#the-truth-about-the-pid-1-problem)
+    - [Proper Node Shutdown Options](#proper-node-shutdown-options)
+    - [Assignment Writing Node Dockerfiles](#assignment-writing-node-dockerfiles)
+    - [Assignment Answers Writing Node Dockerfiles](#assignment-answers-writing-node-dockerfiles)
+    - [Assignment Testing Graceful Shutdowns](#assignment-testing-graceful-shutdowns)
+    - [Assignment Answers Testing Graceful Shutdowns](#assignment-answers-testing-graceful-shutdowns)
 
 ## Docker Compose Basics
 
@@ -671,7 +680,90 @@ do not do this
 
 
 
+## Controlling The Node Process In Containers
 
+### Section Intro Controlling The Node Process
+![Alt text](image-42.png)
+### Node Process Management
+![Alt text](image-43.png)
+### The Truth About the PID 1 Problem
+![Alt text](image-44.png)
+![Alt text](image-45.png)
+### Proper Node Shutdown Options
+![Alt text](image-46.png)
+![Alt text](image-47.png)
+![Alt text](image-48.png)
+![Alt text](image-49.png)
+### Assignment Writing Node Dockerfiles
+```dockerfile
+FROM node:10.15.3-alpine
+
+EXPOSE 3000
+
+RUN apk add --no-cache tini
+
+WORKDIR /app
+
+COPY package.json package.lock*.json ./
+
+RUN npm install && npm cache clean --force
+
+COPY . .
+
+ENTRYPOINT ["/sbin/tini","--"]
+
+CMD ["node","app.js"]
+
+```
+
+```shell
+docker build -t sample-app .
+> docker build -t sample-app .
+[+] Building 13.3s (12/12) FINISHED                                                                                           docker:default
+ => [internal] load build definition from Dockerfile                                                                                    0.0s
+ => => transferring dockerfile: 336B                                                                                                    0.0s 
+ => [internal] load .dockerignore                                                                                                       0.0s 
+ => => transferring context: 2B                                                                                                         0.0s 
+ => [internal] load metadata for docker.io/library/node:10.15.3-alpine                                                                  2.5s 
+ => [auth] library/node:pull token for registry-1.docker.io                                                                             0.0s
+ => [1/6] FROM docker.io/library/node:10.15.3-alpine@sha256:aa28f3b6b4087b3f289bebaca8d3fb82b93137ae739aa67df3a04892d521958e            0.0s
+ => [internal] load build context                                                                                                       0.0s 
+ => => transferring context: 495B                                                                                                       0.0s 
+ => CACHED [2/6] RUN apk add --no-cache tini                                                                                            0.0s 
+ => [3/6] WORKDIR /app                                                                                                                  0.1s 
+ => [4/6] COPY package.json package.lock*.json ./                                                                                       0.1s
+ => [5/6] RUN npm install && npm cache clean --force                                                                                   10.2s 
+ => [6/6] COPY . .                                                                                                                      0.1s
+ => exporting to image                                                                                                                  0.2s 
+ => => exporting layers                                                                                                                 0.2s
+ => => writing image sha256:5c13d72ed0de5644ceb0cee2adad110a93880db4a0fbe35b25bc9e8b7a7ac630                                            0.0s
+ => => naming to docker.io/library/sample-app                                                                                           0.0s
+
+What's Next?
+  View a summary of image vulnerabilities and recommendations → docker scout quickview
+
+
+```
+
+output
+```shell
+docker run sample-app
+> docker run sample-app       
+[1698068180003] INFO  (7 on 4d2c92e1eee5): server started
+    created: 1698068179946
+    started: 1698068179994
+    host: "0.0.0.0"
+    port: 3000
+    protocol: "http"
+    id: "4d2c92e1eee5:7:lo2xy962"
+    uri: "http://0.0.0.0:3000"
+    address: "0.0.0.0"
+Server running at: http://0.0.0.0:3000
+
+```
+### Assignment Answers Writing Node Dockerfiles
+### Assignment Testing Graceful Shutdowns
+### Assignment Answers Testing Graceful Shutdowns
 
 
 
