@@ -29,6 +29,17 @@
     - [Assignment Answers Writing Node Dockerfiles](#assignment-answers-writing-node-dockerfiles)
     - [Assignment Testing Graceful Shutdowns](#assignment-testing-graceful-shutdowns)
     - [Assignment Answers Testing Graceful Shutdowns](#assignment-answers-testing-graceful-shutdowns)
+  - [Advanced Dockerfiles with Multi-stage and BuildKit 🔲](#advanced-dockerfiles-with-multi-stage-and-buildkit-)
+    - [001 Section Intro Advanced Node Dockerfiles 🔲](#001-section-intro-advanced-node-dockerfiles-)
+    - [002 Multi-stage Docker Builds 🔲](#002-multi-stage-docker-builds-)
+    - [003 More Multi-stage Uses 🔲](#003-more-multi-stage-uses-)
+    - [004 Assignment Building A 3-Stage Dockerfile 🔲](#004-assignment-building-a-3-stage-dockerfile-)
+    - [005 Assignment Answers Building a 3-Stage Dockerfile 🔲](#005-assignment-answers-building-a-3-stage-dockerfile-)
+  - [Node Apps in Cloud Native Docker 🔲](#node-apps-in-cloud-native-docker-)
+  - [Compose for Awesome Local Development 🔲](#compose-for-awesome-local-development-)
+  - [Making Container Images Production Ready 🔲](#making-container-images-production-ready-)
+  - [Running Production Node.js Containers 🔲](#running-production-nodejs-containers-)
+  - [Running Node.js on ARM with Docker 🔲](#running-nodejs-on-arm-with-docker-)
 
 ## Docker Compose Basics
 
@@ -695,6 +706,8 @@ do not do this
 ![Alt text](image-48.png)
 ![Alt text](image-49.png)
 ### Assignment Writing Node Dockerfiles
+![Alt text](image-50.png)
+### Assignment Answers Writing Node Dockerfiles
 ```dockerfile
 FROM node:10.15.3-alpine
 
@@ -761,9 +774,49 @@ docker run sample-app
 Server running at: http://0.0.0.0:3000
 
 ```
-### Assignment Answers Writing Node Dockerfiles
 ### Assignment Testing Graceful Shutdowns
+![Alt text](image-51.png)
+bonus
+![Alt text](image-52.png)
 ### Assignment Answers Testing Graceful Shutdowns
+remove the tini from the docker file
 
+```dockerfile
+# fill in the blanks to dockerize this node app
+FROM node:10.15.3-alpine
 
+EXPOSE 3000
 
+# RUN apk add --no-cache tini
+
+WORKDIR /app
+
+COPY package.json package.lock*.json ./
+
+RUN npm install && npm cache clean --force
+
+COPY . .
+
+# ENTRYPOINT ["/sbin/tini","--"]
+
+CMD ["node","app.js"]
+```
+
+we can use the --init flag to use tini
+
+```shell
+docker run --init -p 3000:3000 sample-app-1
+```
+
+## Advanced Dockerfiles with Multi-stage and BuildKit 🔲
+### 001 Section Intro Advanced Node Dockerfiles 🔲
+### 002 Multi-stage Docker Builds 🔲
+### 003 More Multi-stage Uses 🔲
+### 004 Assignment Building A 3-Stage Dockerfile 🔲
+### 005 Assignment Answers Building a 3-Stage Dockerfile 🔲
+
+## Node Apps in Cloud Native Docker 🔲
+## Compose for Awesome Local Development 🔲
+## Making Container Images Production Ready 🔲
+## Running Production Node.js Containers 🔲
+## Running Node.js on ARM with Docker 🔲
