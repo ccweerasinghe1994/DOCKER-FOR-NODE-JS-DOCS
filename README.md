@@ -10,12 +10,16 @@
       - [YAML](#yaml)
     - [docker compose CLI](#docker-compose-cli)
     - [Assignment](#assignment)
-    - [](#)
-    - [](#-1)
-    - [](#-2)
-    - [](#-3)
-    - [](#-4)
-    - [](#-5)
+  - [Node Dockerfile Best Practice Basics](#node-dockerfile-best-practice-basics)
+    - [Section Intro Dockerfile Best Practice Basics](#section-intro-dockerfile-best-practice-basics)
+    - [Dockerfile Best Practice Basics](#dockerfile-best-practice-basics)
+    - [FROM Base Image Guidelines](#from-base-image-guidelines)
+    - [When To Use Alpine, Debian, or CentOS Images](#when-to-use-alpine-debian-or-centos-images)
+    - [Assignment Making a CentOS Node Image](#assignment-making-a-centos-node-image)
+    - [Assignment Answers Making a CentOS Node Image](#assignment-answers-making-a-centos-node-image)
+    - [Running Non-root Container Users](#running-non-root-container-users)
+    - [Working With The Node User Limits](#working-with-the-node-user-limits)
+    - [Making Images Efficiently](#making-images-efficiently)
 
 ## Docker Compose Basics
 
@@ -415,9 +419,259 @@ sample-02-web-1  | GET /mockServiceWorker.js 404 3.368 ms - 983
 canceled
 
 ```
-### 
-### 
-###  
-###  
-### 
-### 
+
+do the cleanup 
+
+```shell
+docker-compose down --rmi local
+> docker-compose down --rmi local       
+[+] Running 3/3
+ ✔ Container sample-02-web-1  Removed                                                                                                                                                                     0.3s 
+ ✔ Image sample-02:latest     Removed                                                                                                                                                                     0.0s 
+ ✔ Network sample-02_default  Removed                                                                                                                                                                     0.3s 
+
+```
+
+```shell
+# this will remove the image files as well
+🐋-> docker-compose down --rmi local
+```
+## Node Dockerfile Best Practice Basics
+### Section Intro Dockerfile Best Practice Basics
+![Alt text](image-26.png)
+### Dockerfile Best Practice Basics
+![Alt text](image-27.png)
+
+![Alt text](image-28.png)
+
+![Alt text](image-29.png)
+### FROM Base Image Guidelines
+![Alt text](image-30.png)
+### When To Use Alpine, Debian, or CentOS Images
+![Alt text](image-32.png)
+### Assignment Making a CentOS Node Image 
+
+![Alt text](image-33.png)
+### Assignment Answers Making a CentOS Node Image
+
+```dockerfile
+# this is an answer file for Assignment
+# move it up a directory for it to work
+
+FROM centos:centos7
+
+RUN groupadd --gid 1000 node \
+    && useradd --uid 1000 --gid node --shell /bin/bash --create-home node
+
+# node install taken from official node image Dockerfile
+ENV NODE_VERSION 10.15.1
+
+RUN set -ex \
+    && for key in \
+    94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+    FD3A5288F042B6850C66B31F09FE44734EB7990E \
+    71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+    DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
+    C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+    B9AE9905FFD7803F25714661B63B535A4C206CA9 \
+    77984A986EBC2AA786BC0F66B01FBB92821C587A \
+    8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+    4ED778F539E3634C779C87C6D7062848A1AB005C \
+    A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
+    B9E2F5981AA6E0CD28160D9FF13993A75599653C \
+    ; do \
+    gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
+    gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
+    gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
+    done \
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
+    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
+    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
+    && grep " node-v$NODE_VERSION-linux-x64.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
+    && tar -xJf "node-v$NODE_VERSION-linux-x64.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
+    && rm "node-v$NODE_VERSION-linux-x64.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs
+
+CMD [ "node" ]
+
+```
+### Running Non-root Container Users
+![Alt text](image-34.png)
+
+![Alt text](image-35.png)
+
+
+### Working With The Node User Limits
+
+```dockerfile
+FROM node:10-slim
+
+EXPOSE 3000
+
+WORKDIR /node
+
+COPY package*.json ./
+
+RUN mkdir app && chown -R node:node .
+USER node
+# RUn or ENtrypoint or CMD will use this user after this line
+RUN npm install && npm cache clean --force
+
+WORKDIR /node/app
+
+COPY --chown=node:node . .
+CMD ["node", "app.js"]
+
+```
+
+```shell
+docker build -t usernode .
+> docker build -t usernode .
+[+] Building 67.2s (12/12) FINISHED                                                                                                                                   docker:default 
+ => [internal] load .dockerignore                                                                                                                                               0.3s 
+ => => transferring context: 62B                                                                                                                                                0.0s 
+ => [internal] load build definition from Dockerfile                                                                                                                            0.5s 
+ => => transferring dockerfile: 292B                                                                                                                                            0.0s 
+ => [internal] load metadata for docker.io/library/node:10-slim                                                                                                                 6.4s 
+ => [auth] library/node:pull token for registry-1.docker.io                                                                                                                     0.0s 
+ => [1/6] FROM docker.io/library/node:10-slim@sha256:88932859e3d022d79161b99628c4c2c50e836437455e2d1b1a008d98367b10d6                                                          40.8s
+ => => resolve docker.io/library/node:10-slim@sha256:88932859e3d022d79161b99628c4c2c50e836437455e2d1b1a008d98367b10d6                                                           0.8s
+ => => sha256:88932859e3d022d79161b99628c4c2c50e836437455e2d1b1a008d98367b10d6 776B / 776B                                                                                      0.0s
+ => => sha256:64c30c91d628d40eb8f772ee1477f78aff820e317e8afbc5160857ee804e4b70 1.37kB / 1.37kB                                                                                  0.0s
+ => => sha256:6fbcbbb5c6032ce4013d4c736ffe54e0764c36fa14315ae54cb51f244e813c52 7.09kB / 7.09kB                                                                                  0.0s
+ => => sha256:bc29352cb629712e7fbce7227a16b53308b541ef41e19122a04c15646756b176 21.91MB / 21.91MB                                                                               35.9s
+ => => sha256:f698164f6049bead44aeb7590e88d3df323011c20f0cedbff3d86f62e4c9f184 4.17kB / 4.17kB                                                                                  2.0s
+ => => sha256:62deabe7a6db312ed773ccd640cd7cfbf51c22bf466886345684558f1036e358 22.53MB / 22.53MB                                                                               30.8s
+ => => sha256:85e84b4c858fae373ccdf48432de781210efb7fd75d9d801be9917577fe6ca09 2.93MB / 2.93MB                                                                                  6.2s
+ => => sha256:ac72e4359589952a2e38fbe10287d792cbb57f2ec3cd1eb730e9bab685ac9754 295B / 295B                                                                                      6.8s
+ => => extracting sha256:62deabe7a6db312ed773ccd640cd7cfbf51c22bf466886345684558f1036e358                                                                                       2.6s
+ => => extracting sha256:f698164f6049bead44aeb7590e88d3df323011c20f0cedbff3d86f62e4c9f184                                                                                       0.0s 
+ => => extracting sha256:bc29352cb629712e7fbce7227a16b53308b541ef41e19122a04c15646756b176                                                                                       3.3s 
+ => => extracting sha256:85e84b4c858fae373ccdf48432de781210efb7fd75d9d801be9917577fe6ca09                                                                                       0.1s 
+ => => extracting sha256:ac72e4359589952a2e38fbe10287d792cbb57f2ec3cd1eb730e9bab685ac9754                                                                                       0.0s 
+ => [internal] load build context                                                                                                                                               1.3s 
+ => => transferring context: 34.24kB                                                                                                                                            0.1s 
+ => [2/6] WORKDIR /node                                                                                                                                                         0.3s 
+ => [3/6] COPY package*.json ./                                                                                                                                                 0.1s 
+ => [4/6] RUN npm install && npm cache clean --force                                                                                                                           16.7s 
+ => [5/6] WORKDIR /node/app                                                                                                                                                     0.9s 
+ => [6/6] COPY . .                                                                                                                                                              0.9s 
+ => exporting to image                                                                                                                                                          0.3s 
+ => => exporting layers                                                                                                                                                         0.3s 
+ => => writing image sha256:507a0bb0af0807868b62aea798a38ec80008839a4c5943c2141417a5974c1620                                                                                    0.0s 
+ => => naming to docker.io/library/usernode                                                                                                                                     0.0s 
+
+
+docker run -it usernode bash
+> docker run -it usernode bash
+node@f1533c601de0:/node/app$ ls -al
+total 68
+drwxr-xr-x 1 root root  4096 Oct 23 08:27 .
+drwxr-xr-x 1 root root  4096 Oct 23 08:28 ..
+-rwxr-xr-x 1 root root    22 Oct 23 04:31 .dockerignore
+-rwxr-xr-x 1 root root   253 Oct 23 08:25 Dockerfile
+drwxr-xr-x 2 root root  4096 Oct 23 04:31 answer
+-rwxr-xr-x 1 root root  1179 Oct 23 04:31 app.js
+-rwxr-xr-x 1 root root   166 Oct 23 04:31 docker-compose.yml
+-rwxr-xr-x 1 root root 31671 Oct 23 04:31 package-lock.json
+-rwxr-xr-x 1 root root   338 Oct 23 04:31 package.json
+node@f1533c601de0:/node/app$ cd ..
+node@f1533c601de0:/node$ ls -al
+total 52
+drwxr-xr-x  1 root root  4096 Oct 23 08:28 .
+drwxr-xr-x  1 root root  4096 Oct 23 08:31 ..
+drwxr-xr-x  1 root root  4096 Oct 23 08:27 app
+drwxr-xr-x 41 root root  4096 Oct 23 08:28 node_modules
+-rwxr-xr-x  1 root root 25761 Oct 23 08:28 package-lock.json
+-rwxr-xr-x  1 root root   338 Oct 23 04:31 package.json
+node@f1533c601de0:/node$ exit
+exit
+
+docker build -t usernode .
+> docker build -t usernode .  
+[+] Building 30.4s (12/12) FINISHED                                                                                                                                   docker:default
+ => [internal] load .dockerignore                                                                                                                                               0.0s
+ => => transferring context: 62B                                                                                                                                                0.0s 
+ => [internal] load build definition from Dockerfile                                                                                                                            0.0s 
+ => => transferring dockerfile: 294B                                                                                                                                            0.0s 
+ => [internal] load metadata for docker.io/library/node:10-slim                                                                                                                 3.3s 
+ => [auth] library/node:pull token for registry-1.docker.io                                                                                                                     0.0s
+ => CACHED [1/6] FROM docker.io/library/node:10-slim@sha256:88932859e3d022d79161b99628c4c2c50e836437455e2d1b1a008d98367b10d6                                                    0.0s
+ => [internal] load build context                                                                                                                                               0.3s 
+ => => transferring context: 527B                                                                                                                                               0.0s 
+ => [2/6] WORKDIR /node                                                                                                                                                         1.0s 
+ => [3/6] COPY package*.json ./                                                                                                                                                 0.9s
+ => [4/6] RUN npm install && npm cache clean --force                                                                                                                           24.6s
+ => [5/6] WORKDIR /node/app                                                                                                                                                     0.1s
+ => [6/6] COPY . .                                                                                                                                                              0.0s
+ => exporting to image                                                                                                                                                          0.2s
+ => => exporting layers                                                                                                                                                         0.2s
+ => => writing image sha256:6f1badf043add89e71a1992b181fd821f6f2853e5d118af266cf7eafc463f760                                                                                    0.0s
+ => => naming to docker.io/library/usernode                                                                                                                                     0.0s
+docker build -t usernode .
+> docker build -t usernode .
+[+] Building 13.3s (12/12) FINISHED                                                                                                                                   docker:default
+ => [internal] load .dockerignore                                                                                                                                               0.0s
+ => => transferring context: 62B                                                                                                                                                0.0s 
+ => [internal] load build definition from Dockerfile                                                                                                                            0.0s 
+ => => transferring dockerfile: 333B                                                                                                                                            0.0s 
+ => [internal] load metadata for docker.io/library/node:10-slim                                                                                                                 3.5s 
+ => [1/7] FROM docker.io/library/node:10-slim@sha256:88932859e3d022d79161b99628c4c2c50e836437455e2d1b1a008d98367b10d6                                                           0.0s
+ => [internal] load build context                                                                                                                                               0.0s 
+ => => transferring context: 566B                                                                                                                                               0.0s 
+ => CACHED [2/7] WORKDIR /node                                                                                                                                                  0.0s 
+ => CACHED [3/7] COPY package*.json ./                                                                                                                                          0.0s 
+ => [4/7] RUN mkdir app && chown -R node:node .                                                                                                                                 0.4s 
+ => [5/7] RUN npm install && npm cache clean --force                                                                                                                            8.9s
+ => [6/7] WORKDIR /node/app                                                                                                                                                     0.1s
+ => [7/7] COPY . .                                                                                                                                                              0.1s
+ => exporting to image                                                                                                                                                          0.2s
+ => => exporting layers                                                                                                                                                         0.2s
+ => => writing image sha256:9c403f2e1fa01952b2908be9c2c2a67c866ec1c513c78aaaaadde2e3cd8a79cb                                                                                    0.0s
+ => => naming to docker.io/library/usernode                                                                                                                                     0.0s
+docker run -it usernode bash
+node@95638b71234c:/node/app$ ls -al
+total 68
+drwxr-xr-x 1 node node  4096 Oct 23 08:39 .
+drwxr-xr-x 1 node node  4096 Oct 23 08:37 ..
+-rwxr-xr-x 1 node node    22 Oct 23 04:31 .dockerignore
+-rwxr-xr-x 1 node node   312 Oct 23 08:38 Dockerfile
+drwxr-xr-x 2 node node  4096 Oct 23 04:31 answer
+-rwxr-xr-x 1 node node  1179 Oct 23 04:31 app.js
+-rwxr-xr-x 1 node node   166 Oct 23 04:31 docker-compose.yml
+-rwxr-xr-x 1 node node 31671 Oct 23 04:31 package-lock.json
+-rwxr-xr-x 1 node node   338 Oct 23 04:31 package.json
+node@95638b71234c:/node/app$ cd ..
+node@95638b71234c:/node$ ls -al
+total 52
+drwxr-xr-x  1 node node  4096 Oct 23 08:37 .
+drwxr-xr-x  1 root root  4096 Oct 23 08:39 ..
+drwxr-xr-x  1 node node  4096 Oct 23 08:39 app
+drwxr-xr-x 41 node node  4096 Oct 23 08:37 node_modules
+-rwxr-xr-x  1 node node 25761 Oct 23 08:37 package-lock.json
+-rwxr-xr-x  1 node node   338 Oct 23 04:31 package.json
+```
+### Making Images Efficiently
+
+![Alt text](image-38.png)
+
+![Alt text](image-36.png)
+
+
+![Alt text](image-37.png)
+
+
+![Alt text](image-39.png)
+run the package command on a single command
+![Alt text](image-40.png)
+do not do this
+
+![Alt text](image-41.png)
+
+
+
+
+
+
+
+
