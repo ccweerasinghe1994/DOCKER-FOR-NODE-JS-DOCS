@@ -29,12 +29,12 @@
     - [Assignment Answers Writing Node Dockerfiles](#assignment-answers-writing-node-dockerfiles)
     - [Assignment Testing Graceful Shutdowns](#assignment-testing-graceful-shutdowns)
     - [Assignment Answers Testing Graceful Shutdowns](#assignment-answers-testing-graceful-shutdowns)
-  - [Advanced Dockerfiles with Multi-stage and BuildKit 🔲](#advanced-dockerfiles-with-multi-stage-and-buildkit-)
-    - [001 Section Intro Advanced Node Dockerfiles 🔲](#001-section-intro-advanced-node-dockerfiles-)
-    - [002 Multi-stage Docker Builds 🔲](#002-multi-stage-docker-builds-)
-    - [003 More Multi-stage Uses 🔲](#003-more-multi-stage-uses-)
-    - [004 Assignment Building A 3-Stage Dockerfile 🔲](#004-assignment-building-a-3-stage-dockerfile-)
-    - [005 Assignment Answers Building a 3-Stage Dockerfile 🔲](#005-assignment-answers-building-a-3-stage-dockerfile-)
+  - [Advanced Dockerfiles with Multi-stage and BuildKit ✅](#advanced-dockerfiles-with-multi-stage-and-buildkit-)
+    - [Section Intro Advanced Node Dockerfiles ✅](#section-intro-advanced-node-dockerfiles-)
+    - [Multi-stage Docker Builds ✅](#multi-stage-docker-builds-)
+    - [More Multi-stage Uses ✅](#more-multi-stage-uses-)
+    - [004 Assignment Building A 3-Stage Dockerfile ✅](#004-assignment-building-a-3-stage-dockerfile-)
+    - [005 Assignment Answers Building a 3-Stage Dockerfile ✅](#005-assignment-answers-building-a-3-stage-dockerfile-)
   - [Node Apps in Cloud Native Docker 🔲](#node-apps-in-cloud-native-docker-)
   - [Compose for Awesome Local Development 🔲](#compose-for-awesome-local-development-)
   - [Making Container Images Production Ready 🔲](#making-container-images-production-ready-)
@@ -808,13 +808,64 @@ we can use the --init flag to use tini
 docker run --init -p 3000:3000 sample-app-1
 ```
 
-## Advanced Dockerfiles with Multi-stage and BuildKit 🔲
-### 001 Section Intro Advanced Node Dockerfiles 🔲
-### 002 Multi-stage Docker Builds 🔲
-### 003 More Multi-stage Uses 🔲
-### 004 Assignment Building A 3-Stage Dockerfile 🔲
-### 005 Assignment Answers Building a 3-Stage Dockerfile 🔲
+## Advanced Dockerfiles with Multi-stage and BuildKit ✅
+### Section Intro Advanced Node Dockerfiles ✅
+![Alt text](image-53.png)
+### Multi-stage Docker Builds ✅
+![Alt text](image-55.png)
 
+![ ](image-56.png)
+
+![Alt text](image-57.png)
+
+
+### More Multi-stage Uses ✅
+![Alt text](image-58.png)
+### 004 Assignment Building A 3-Stage Dockerfile ✅
+![Alt text](image-60.png)
+
+```dockerfile
+FROM node:18-slim as prod
+ENV NODE_ENV=production
+WORKDIR /app
+
+FROM prod as dev
+ENV NODE_ENV=development
+
+FROM dev as test
+ENV NODE_ENV=development
+```
+### 005 Assignment Answers Building a 3-Stage Dockerfile ✅
+
+```dockerfile
+FROM node:18-slim as prod
+ENV NODE_ENV=production
+EXPOSE 3000
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install --omit=dev && npm cache clean --force
+
+COPY . .
+RUN echo "NODE_ENV=$NODE_ENV"
+CMD ["node", "./bin/www"]
+
+FROM prod as dev
+ENV NODE_ENV=development
+# no need to clean the cache here because this is for local development only
+# --omit=prod wil only install devDependencies
+RUN npm install --omit=prod
+
+
+CMD ["npm", "run", "dev"]
+
+FROM dev as test
+ENV NODE_ENV=development
+
+CMD [ "npm", "test" ]
+
+```
 ## Node Apps in Cloud Native Docker 🔲
 ## Compose for Awesome Local Development 🔲
 ## Making Container Images Production Ready 🔲
