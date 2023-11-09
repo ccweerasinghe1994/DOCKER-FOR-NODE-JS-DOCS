@@ -35,8 +35,17 @@
     - [More Multi-stage Uses ✅](#more-multi-stage-uses-)
     - [004 Assignment Building A 3-Stage Dockerfile ✅](#004-assignment-building-a-3-stage-dockerfile-)
     - [005 Assignment Answers Building a 3-Stage Dockerfile ✅](#005-assignment-answers-building-a-3-stage-dockerfile-)
-  - [Node Apps in Cloud Native Docker 🔲](#node-apps-in-cloud-native-docker-)
+  - [Node Apps in Cloud Native Docker ✅](#node-apps-in-cloud-native-docker-)
+    - [Cloud Native App Guidelines ✅](#cloud-native-app-guidelines-)
+    - [Twelve Factor Apps - Config ✅](#twelve-factor-apps---config-)
+    - [Twelve Factor Apps - Logs ✅](#twelve-factor-apps---logs-)
+    - [The .dockerignore File ✅](#the-dockerignore-file-)
+    - [Assignment Migrating Traditional Apps ✅](#assignment-migrating-traditional-apps-)
+    - [Assignment Answers Migrating Traditional Apps ✅](#assignment-answers-migrating-traditional-apps-)
   - [Compose for Awesome Local Development 🔲](#compose-for-awesome-local-development-)
+    - [](#)
+    - [](#-1)
+    - [](#-2)
   - [Making Container Images Production Ready 🔲](#making-container-images-production-ready-)
   - [Running Production Node.js Containers 🔲](#running-production-nodejs-containers-)
   - [Running Node.js on ARM with Docker 🔲](#running-nodejs-on-arm-with-docker-)
@@ -866,8 +875,92 @@ ENV NODE_ENV=development
 CMD [ "npm", "test" ]
 
 ```
-## Node Apps in Cloud Native Docker 🔲
+## Node Apps in Cloud Native Docker ✅
+### Cloud Native App Guidelines ✅
+![Alt text](image-61.png)
+
+12 factor app https://12factor.net/
+
+![Alt text](image-62.png)
+
+
+
+### Twelve Factor Apps - Config ✅
+![Alt text](image-63.png)
+### Twelve Factor Apps - Logs ✅
+![Alt text](image-64.png)  
+### The .dockerignore File ✅
+![Alt text](image-65.png)
+![Alt text](image-66.png)
+### Assignment Migrating Traditional Apps ✅
+
+![Alt text](image-67.png)
+![Alt text](image-69.png)
+![Alt text](image-70.png)
+### Assignment Answers Migrating Traditional Apps ✅
+```dockerignore
+answer/
+node_modules/
+in/
+out/
+logs/
+```
+```dockerfile
+# this is an answer file for Assignment Migrating Traditional Apps
+# move it up a directory for it to work
+FROM node:14
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    graphicsmagick \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+ENV CHARCOAL_FACTOR=0.1
+
+CMD ["node", "index.js"]
+
+
+```
+
+```shell
+# step 1: build the image
+
+# build the image
+docker build -t mta-app:latest .
+
+# ---------------------------------------
+
+# setp 2: run the container
+
+# set bind mount to in and out directories
+# -it is interactive mode
+# --rm removes the container when it exits
+# --name is the name of the container
+# --mount is the bind mount
+# type=bind is the type of mount
+# source is the source directory
+# target is the target directory
+# devtest is the name of the image
+docker run -it \
+  --name mta-app \
+  --mount type=bind,source="$(pwd)"/in,target=/usr/src/app/in \
+  --mount type=bind,source="$(pwd)"/out,target=/usr/src/app/out \
+  mta-app:1.0.0
+
+```
+
 ## Compose for Awesome Local Development 🔲
+### 
+### 
+### 
 ## Making Container Images Production Ready 🔲
 ## Running Production Node.js Containers 🔲
 ## Running Node.js on ARM with Docker 🔲
